@@ -13,8 +13,14 @@ def calc(in_dim, conv, pool, repeat):
 
 def main():
 	factor = 0.4
-	in_shape = [160*factor, 320*factor]
-	# in_shape = [80*factor, 320*factor]
+	# in_shape = [160*factor, 320*factor]
+
+	top_crop_factor = 60/160
+	bot_crop_factor = 25/160
+	y_crop_factor = 1 - (top_crop_factor + bot_crop_factor) # 0.53125
+	in_shape = [160*y_crop_factor, 320]
+
+	# in_shape = [68*factor, 320*factor]
 
 	conv_filters = [5, 5, 5, 3, 3]
 	# conv_filters = [3, 3, 3, 2, 2]

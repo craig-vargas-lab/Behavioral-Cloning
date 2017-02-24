@@ -26,25 +26,37 @@ DRIVING_FULL_PATH = DIRECTORY + '/' + DRIVING_FILE
 FOLDER = 'IMG'
 SHRINK_FACTOR = 0.4
 
+
 # Model params
-# =============
-EPOCHS = 50
+# ==================
+# ==================
+EPOCHS = 10
 BATCH = 210
-TOP_CROP_FACTOR = 0.4
-BOT_CROP_FACTOR = 0.175
+TOP_CROP_FACTOR = 60.0/160.0
+BOT_CROP_FACTOR = 25.0/160.0
 CONV_FILTER = (5, 5, 5, 3, 3) # Nvidia
 # CONV_FILTER = (3, 3, 3, 2, 2)
+
 # CONV_DEPTH = (24, 36, 48, 64, 64) # Nvidia
+# CONV_DEPTH = (2, 4, 6, 8, 10)
 # CONV_DEPTH = (4, 6, 8, 10, 12)
 # CONV_DEPTH = (8, 12, 16, 20, 24)
+CONV_DEPTH = (2, 4, 8, 16, 32)
 # CONV_DEPTH = (16, 24, 32, 40, 48)
-CONV_DEPTH = (12, 24, 36, 48, 64)
-FIRST_DENSE_PARAM = 100 # 100 -> Nvidia
+# CONV_DEPTH = (12, 24, 36, 48, 64)
+
+FIRST_DENSE_PARAM = 400 # 100 -> Nvidia
+# DENSE_PARAMS = (200, 100, 10, 1)
+DENSE_PARAMS = (400, 100, 25, 1)
 LR = 0.001
 DECAY = 0.1
 DROP_PROB = 0.5
+
+
 # Params for testing
-TEST_SIZE = 210 * 2 
+# ==================
+# ==================
+TEST_SIZE = 210 * 1 
 NUM_SAMPLES = 100 # Required if using the shuffle statement that inclucde the third parameter n_samples
 
 # IMG_PATH = DIRECTORY + '/IMG'
@@ -500,116 +512,7 @@ def train_model(images, steering):
 	print()
 	print("=============================")
 	print("=============================")
-	print("TRAINING MODEL")
-	print("=============================")
-	print("=============================")
-	start_time = time.time()
-	shape = images.shape
-	height = shape[1]
-	width = shape[2]
-	depth = shape[3]
-	top_crop = int(TOP_CROP_FACTOR * height)
-	bot_crop = int(BOT_CROP_FACTOR * height)
-	# Build model
-	model = Sequential()
-	# Layer 1 (5x5): 40x80 -> 18x38
-	# Layer 1 (5x5): 64x128 -> 30x62
-	# model.add(Cropping2D(cropping=((top_crop, bot_crop), (0, 0)), dim_ordering='tf', input_shape=(height, width, depth)))
-	# model.add(Convolution2D(24, 5, 5, border_mode='valid'))
-	model.add(Convolution2D(CONV_DEPTH[0], CONV_FILTER[0], CONV_FILTER[0], dim_ordering='tf', border_mode='valid', input_shape=(height, width, depth)))
-	# model.add(Convolution2D(24, CONV_FILTER[0], CONV_FILTER[0], border_mode='valid', dim_ordering='tf', input_shape=(height, width, 1)))
-	model.add(Activation('relu'))
-	model.add(MaxPooling2D(pool_size=(2, 2), strides=None, border_mode='same', dim_ordering='tf'))
-	# Layer 2 (5x5): 18x38 -> 7x17
-	# Layer 2 (5x5): 30x62 -> 13x29
-	model.add(Convolution2D(CONV_DEPTH[1], CONV_FILTER[1], CONV_FILTER[1], border_mode='valid', dim_ordering='tf'))
-	model.add(Activation('relu'))
-	model.add(MaxPooling2D(pool_size=(2, 2), strides=None, border_mode='same', dim_ordering='tf'))
-	# Layer 3 (3x3): 7x17 -> 3x8
-	# Layer 3 (5x5): 30x62 -> 5x13
-	model.add(Convolution2D(CONV_DEPTH[2], CONV_FILTER[2], CONV_FILTER[2], border_mode='valid', dim_ordering='tf'))
-	model.add(Activation('relu'))
-	model.add(MaxPooling2D(pool_size=(2, 2), strides=None, border_mode='same', dim_ordering='tf'))
-	# Dropout
-	model.add(Dropout(DROP_PROB))
-	# Layer 4 (2x2): 3x8 -> 2x7 
-	# Layer 4 (3x3): 5x13 -> 3x11
-	model.add(Convolution2D(CONV_DEPTH[3], CONV_FILTER[3], CONV_FILTER[3], border_mode='valid', dim_ordering='tf'))
-	model.add(Activation('relu'))
-	# Layer 5 (2x2): 2x7 -> 1x6
-	# Layer 5 (3x3): 3x11 -> 1x9
-	model.add(Convolution2D(CONV_DEPTH[4], CONV_FILTER[4], CONV_FILTER[4], border_mode='valid', dim_ordering='tf'))
-	model.add(Activation('relu'))
-	# Dropout
-	model.add(Dropout(DROP_PROB))
-	# Flatten: 64x1x6 -> 384
-	# Flatten: 64x1x9 -> 576
-	model.add(Flatten())
-	# Layer 6
-	model.add(Dense(FIRST_DENSE_PARAM))
-	model.add(Activation('relu'))
-	# Layer 7
-	model.add(Dense(int(FIRST_DENSE_PARAM*0.5)))
-	model.add(Activation('relu'))
-	# Dropout
-	model.add(Dropout(DROP_PROB))
-	# Layer 8
-	model.add(Dense(10))
-	model.add(Activation('relu'))
-	# Layer 9
-	model.add(Dense(1))
-	# Set model training parameters
-	# sgd = SGD(lr=LR, decay=DECAY)
-	# model.compile(optimizer=sgd, loss='mse', metrics=['accuracy'])
-	adam = Adam(lr=LR)
-	model.compile(optimizer=adam, loss='mean_squared_error', metrics=['accuracy'])
-    # Train model
-	history = model.fit(images, steering, nb_epoch=EPOCHS, batch_size=BATCH, validation_split=0.2, shuffle=True)
-	# Record end time
-	end_time = time.time()
-
-	print("Finished. Elapsed time: {0} mins".format((end_time - start_time)/float(60)))
-	print()
-
-	print("==============================")
-	print("History:")
-	print("==============================")
-	for key, val in history.history.items():
-		print("{0}: {1:.3f}".format(key, val[EPOCHS-1]))
-	print()
-	# print(history.history)
-
-	print("==============================")
-	print("Predict:")
-	print("==============================")
-	pred_x, pred_y = shuffle(images, steering, n_samples=(96))
-	model_pred = model.predict(pred_x, batch_size=32, verbose=0)
-
-	correct = []
-	for i in range(len(model_pred)):
-		if abs(pred_y[i] - model_pred[i]) < 5e-4:
-			correct.append((i, model_pred[i], pred_y[i]))
-
-	acc = len(correct)/len(pred_y)
-
-	print("Model Predictions:")
-	print(model_pred)
-	print()
-	print("Actual Response")
-	print(pred_y)
-	print()
-	print("Correct accuracy: {0}.  \nPredictions:".format(acc))
-	print(correct)
-	print()
-	cv2.imshow('First Image', pred_x[0])
-	input()
-
-
-def train_model_exp(images, steering):
-	print()
-	print("=============================")
-	print("=============================")
-	print("TRAINING MODEL (Experimental)")
+	print("TRAINING MODEL ()")
 	print("=============================")
 	print("=============================")
 	start_time = time.time()
@@ -785,6 +688,190 @@ def train_model_exp(images, steering):
 	input()
 
 
+def train_model_exp(images, steering):
+	print()
+	print("=============================")
+	print("=============================")
+	print("TRAINING MODEL (Experimental)")
+	print("=============================")
+	print("=============================")
+
+	start_time = time.time()
+	shape = images.shape
+	height = shape[1]
+	width = shape[2]
+	depth = shape[3]
+
+	n_samples = shape[0]
+	n_test = int(0.17 * n_samples)
+	test_x = images[:n_test]
+	test_y = steering[:n_test]
+	train_x = images[n_test:]
+	train_y = steering[n_test:]
+
+	model = build_model(height, width, depth)
+
+	# Set model training parameters
+	# sgd = SGD(lr=LR, decay=DECAY)
+	# model.compile(optimizer=sgd, loss='mse', metrics=['accuracy'])
+	adam = Adam(lr=LR)
+	# model.compile(optimizer=adam, loss='mean_squared_error', metrics=['accuracy', 'mean_absolute_error'])
+	model.compile(optimizer=adam, loss='mean_absolute_error')
+    # Train model
+	history = model.fit(train_x, train_y, nb_epoch=EPOCHS, batch_size=BATCH, validation_split=0.2, shuffle=True)
+	# Record end time
+	end_time = time.time()
+
+	print("Finished. Elapsed time: {0} mins".format((end_time - start_time)/float(60)))
+	print()
+
+	print("==============================")
+	print("History:")
+	print("==============================")
+	for key, val in history.history.items():
+		print("Metric: {0},  Final Value: {1:.3f},  Reduction:  {2:.4f}".format(key, val[EPOCHS-1], val[0] - val[EPOCHS -1]))
+	print()
+	# print(history.history)
+
+	print("==============================")
+	print("Predict:")
+	print("==============================")
+	# test_x, test_y = shuffle(images, steering, n_samples=(96))
+	test_pred = model.predict(test_x, batch_size=150, verbose=0)
+	metrics = model.evaluate(test_x, test_y, batch_size=150, verbose=1, sample_weight=None)
+
+	print("Evaluation:")
+	print(metrics)
+	print()
+
+	correct = []
+	for i in range(len(test_pred)):
+		if abs(test_y[i] - test_pred[i]) < 1e-2:
+			correct.append((i, test_pred[i], test_y[i]))
+
+	acc = len(correct)/len(test_y)
+
+	# print("Model Predictions:")
+	# print(test_pred)
+	# print()
+	# print("Actual Response")
+	# print(test_y)
+	# print()
+	# view_predictions(test_pred, test_y)
+	# print("Correct accuracy: {0}.  Number of correct predictions: {1}\nPredictions:".format(acc,len(correct)))
+	print("Predicted {0} examples correctly.  Accuracy -> {1}".format(len(correct), acc))
+	print("Predictions:")
+	print(correct)
+	print()
+
+	model.save('model_exp.h5')
+	print("Model saved")
+	print("===========")
+	print("===========")
+	print()
+
+	cv2.imshow('First Image', test_x[0])
+	input("===========  Hit enter to continue  ============")
+
+
+def build_model(height, width, depth):
+	top_crop = int(TOP_CROP_FACTOR * height)
+	bot_crop = int(BOT_CROP_FACTOR * height)
+
+	# Build model
+	model = Sequential()
+
+
+	# Layer 1 (5x5): 40x80 -> 18x38
+	# Layer 1 (5x5): 64x128 -> 30x62
+	model.add(Cropping2D(cropping=((top_crop, bot_crop), (0, 0)), dim_ordering='tf', input_shape=(height, width, depth)))
+	model.add(Convolution2D(CONV_DEPTH[0], CONV_FILTER[0], CONV_FILTER[0], dim_ordering='tf', border_mode='valid'))
+	# model.add(Convolution2D(CONV_DEPTH[0], CONV_FILTER[0], CONV_FILTER[0], dim_ordering='tf', border_mode='valid', input_shape=(height, width, depth)))
+	model.add(Activation('relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2), strides=None, border_mode='same', dim_ordering='tf'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+	# Layer 2 (5x5): 18x38 -> 7x17
+	# Layer 2 (5x5): 30x62 -> 13x29
+	model.add(Convolution2D(CONV_DEPTH[1], CONV_FILTER[1], CONV_FILTER[1], border_mode='valid', dim_ordering='tf'))
+	model.add(Activation('relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2), strides=None, border_mode='same', dim_ordering='tf'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+	# Layer 3 (3x3): 7x17 -> 3x8
+	# Layer 3 (5x5): 30x62 -> 5x13
+	model.add(Convolution2D(CONV_DEPTH[2], CONV_FILTER[2], CONV_FILTER[2], border_mode='valid', dim_ordering='tf'))
+	model.add(Activation('relu'))
+	model.add(MaxPooling2D(pool_size=(2, 2), strides=None, border_mode='same', dim_ordering='tf'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+	# Layer 4 (2x2): 3x8 -> 2x7 
+	# Layer 4 (3x3): 5x13 -> 3x11
+	model.add(Convolution2D(CONV_DEPTH[3], CONV_FILTER[3], CONV_FILTER[3], border_mode='valid', dim_ordering='tf'))
+	model.add(Activation('relu'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+	# Layer 5 (2x2): 2x7 -> 1x6
+	# Layer 5 (3x3): 3x11 -> 1x9
+	model.add(Convolution2D(CONV_DEPTH[4], CONV_FILTER[4], CONV_FILTER[4], border_mode='valid', dim_ordering='tf'))
+	model.add(Activation('relu'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+
+	# Flatten: 64x1x6 -> 384
+	# Flatten: 64x1x9 -> 576
+	model.add(Flatten())
+
+
+	# Layer 6
+	model.add(Dense(DENSE_PARAMS[0]))
+	model.add(Activation('relu'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+	# Layer 7
+	model.add(Dense(int(DENSE_PARAMS[1])))
+	model.add(Activation('relu'))
+
+
+	# Dropout
+	# model.add(Dropout(DROP_PROB))
+
+
+	# Layer 8
+	model.add(Dense(DENSE_PARAMS[2]))
+	model.add(Activation('relu'))
+
+
+	# Layer 9
+	model.add(Dense(DENSE_PARAMS[3]))
+
+	return model
+
+
 def view_predictions(predictions, actuals):
 	print()
 	print("Predicitons")
@@ -828,8 +915,9 @@ def main():
 		(steering_center, steering_left, steering_right))
 	# gray_images = images_ctr_lft_rgt
 	gray_images = to_grayscale(images_ctr_lft_rgt)
-	sml_images = shrink_images(gray_images, SHRINK_FACTOR)
-	norm_images = normalize(sml_images)
+	# sml_images = shrink_images(gray_images, SHRINK_FACTOR)
+	# norm_images = normalize(sml_images)
+	norm_images = normalize(gray_images)
 	aug_images, aug_steering  = create_flipped_images(norm_images, steering_ctr_lft_rgt)
 
 	# IMAGES, STEERING = shuffle_data(aug_images, aug_steering, NUM_SAMPLES)		
