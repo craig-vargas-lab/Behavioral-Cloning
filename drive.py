@@ -16,7 +16,7 @@ from keras.models import load_model
 import h5py
 from keras import __version__ as keras_version
 
-import train
+import model as preprocess
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -68,23 +68,22 @@ def telemetry(sid, data):
         # CVAR:
         # ==============
         # ==============
+        image_array2 = preprocess.drive_preprocess(image_array)
+        steering_angle = float(model.predict(image_array2[None, :, :, :], batch_size=1))
+
+
+
+        # CVAR:
         # ==============
-        # shape_cvar = image_array.shape
-        # print("Image shape:", shape_cvar)  
-        # gray_cvar = train.to_grayscale(image_array.reshape(1, shape_cvar[0], shape_cvar[1], shape_cvar[2]))
-        # sml_cvar = train.shrink_images(gray_cvar, train.SHRINK_FACTOR)
-        # norm_cvar = train.normalize(sml_cvar)
-        # image_array = norm_cvar[0]
-        # image_array = image_array.reshape(shape_cvar[0], shape_cvar[1], 1)
-        image_array = train.drive_preprocess(image_array)
-        # shape_cvar = image_array.shape
-        # print("Image shape after processing", shape_cvar)
-
-
-
-        steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
+        # ==============
+        # steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
+
+        # CVAR:
+        # ==============
+        # ==============
+        # throttle = 0.2 #0.155
 
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
