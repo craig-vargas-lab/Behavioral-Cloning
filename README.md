@@ -6,7 +6,7 @@ Instructions on how to replicate the experiment will come in the future once I g
 
 ## License
 
-    Copyright 2016 Craig Vargas
+    Copyright 2017 Craig Vargas
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
