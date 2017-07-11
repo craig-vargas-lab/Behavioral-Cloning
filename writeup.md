@@ -78,9 +78,13 @@ As stated above, the first thing I wanted to do was to scale the images down so 
 ## Image processing examples:
 
 [Full size image from the dashboard camera](./images/full.jpg)
+
 [Image after scaling down](./images/shrink.jpg)
+
 [Image after applying a grayscale](./images/gray.jpg)
+
 [Image after cropping uneccessary information](./images/cropped.jpg)
+
 [Image after normalizing the data from [0,255] to [-0.5,0.5]](./images/normalized.jpg)
 
  			 		
