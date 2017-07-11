@@ -1,6 +1,8 @@
 # **Behavioral cloning for autonomous vehicles**
 ## This repository hosts a behavioral cloning experiement that aims to control the steering of a vehicle inside of a simulated race track. 
 
+### Tools
+Most of the work for this project was done in Python utilizing the anaconda libraries.  A list of the libraries used can be found [here](./ai-cv.txt).
 
 
 ## Files:
